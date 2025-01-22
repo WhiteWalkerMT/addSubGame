@@ -1,0 +1,9 @@
+subtraction build a game that should be deployed into github pages,
+the game is for a 6 year old to learn Addition and subtraction.
+the game should include the following features:
+1. The player will have a minute to answer as many questions as possible
+2. each question is Addition or subtraction of two random numbers
+3. each number should be up to 10
+4. A successful answer will grant 1 point and switch to a new question
+
+write only the html code without any description

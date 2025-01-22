@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Game for Kids</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4, #fbc2eb);
+            background-size: 300% 300%;
+            animation: gradientBG 6s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .score, .timer {
+            font-size: 1.8em;
+            color: #ff6f61;
+            margin: 10px 0;
+        }
+
+        .question {
+            font-size: 2.5em;
+            margin: 20px 0;
+            color: #4caf50;
+        }
+
+        .bubbles {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .bubble {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #ffcccb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8em;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.2s;
+            color: #333;
+        }
+
+        .bubble:hover {
+            background-color: #ffa07a;
+        }
+
+        .bubble.correct {
+            background-color: #90ee90 !important;
+            transform: scale(1.2);
+        }
+
+        .bubble.wrong {
+            background-color: #f08080 !important;
+            transform: scale(0.9);
+        }
+
+        .decorations {
+            position: absolute;
+            top: -30px;
+            left: -30px;
+            width: calc(100% + 60px);
+            height: calc(100% + 60px);
+            background: url('https://upload.wikimedia.org/wikipedia/commons/9/96/Math_symbols_pattern.png') repeat;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        img {
+            position: absolute;
+            top: -80px;
+            left: calc(50% - 40px);
+            width: 80px;
+            height: 80px;
+        }
+
+        button {
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        .popup h2 {
+            margin: 0 0 10px;
+            color: #4caf50;
+        }
+
+        .popup ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            color: #333;
+        }
+
+        .popup ul li {
+            margin: 5px 0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        #start-popup {
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="decorations"></div>
+        <img src="albert-removebg-preview.png" alt="Cartoon Einstein">
+        <div class="timer">Time: <span id="time">60</span> seconds</div>
+        <div class="score">Score: <span id="score">0</span></div>
+        <div class="question" id="question">5 + 3 = ?</div>
+        <div class="bubbles" id="bubbles">
+            <!-- Dynamic bubbles will be inserted here -->
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="popup">
+        <h2>Game Over!</h2>
+        <p>Your Score: <span id="final-score"></span></p>
+        <h3>Scoreboard</h3>
+        <ul id="scoreboard"></ul>
+        <button onclick="closePopup()">Close</button>
+        <button id="restart">Start Game</button>
+    </div>
+
+    <div class="popup" id="start-popup">
+        <h2>Welcome to the Math Game!</h2>
+        <p>Test your math skills by answering as many questions as you can in 60 seconds!</p>
+        <button id="start">Start Game</button>
+    </div>
+
+    <script>
+        const timeDisplay = document.getElementById("time");
+        const scoreDisplay = document.getElementById("score");
+        const questionDisplay = document.getElementById("question");
+        const bubblesContainer = document.getElementById("bubbles");
+        const startButton = document.getElementById("start");
+        const restartButton = document.getElementById("restart");
+        const popup = document.getElementById("popup");
+        const startPopup = document.getElementById("start-popup");
+        const overlay = document.getElementById("overlay");
+        const finalScore = document.getElementById("final-score");
+        const scoreboard = document.getElementById("scoreboard");
+
+        let time = 60;
+        let score = 0;
+        let interval;
+        let currentQuestion;
+        let scoreHistory = [];
+
+        function generateQuestion() {
+            let num1, num2, answer;
+            do {
+                num1 = Math.floor(Math.random() * 11);
+                num2 = Math.floor(Math.random() * 11);
+                const isAddition = Math.random() > 0.5;
+                answer = isAddition ? num1 + num2 : num1 - num2;
+                currentQuestion = { question: isAddition ? `${num1} + ${num2}` : `${num1} - ${num2}`, answer };
+            } while (answer <= 0);
+
+            questionDisplay.textContent = currentQuestion.question;
+            generateBubbles(currentQuestion.answer);
+        }
+
+        function generateBubbles(correctAnswer) {
+            bubblesContainer.innerHTML = "";
+            const answers = new Set([correctAnswer]);
+
+            while (answers.size < 5) {
+                const fakeAnswer = Math.floor(Math.random() * 21) - 10;
+                if (fakeAnswer > 0) answers.add(fakeAnswer);
+            }
+
+            Array.from(answers).sort(() => Math.random() - 0.5).forEach(answer => {
+                const bubble = document.createElement("div");
+                bubble.textContent = answer;
+                bubble.className = "bubble";
+                bubble.addEventListener("click", () => checkAnswer(bubble, answer));
+                bubblesContainer.appendChild(bubble);
+            });
+        }
+
+        function checkAnswer(bubble, selectedAnswer) {
+            if (selectedAnswer === currentQuestion.answer) {
+                bubble.classList.add("correct");
+                score++;
+                scoreDisplay.textContent = score;
+                setTimeout(() => generateQuestion(), 500);
+            } else {
+                bubble.classList.add("wrong");
+            }
+            setTimeout(() => bubble.classList.remove("correct", "wrong"), 500);
+        }
+
+        function showPopup() {
+            finalScore.textContent = score;
+            scoreHistory.unshift(score);
+            if (scoreHistory.length > 5) scoreHistory.pop();
+
+            scoreboard.innerHTML = "";
+            scoreHistory.forEach((s, index) => {
+                const li = document.createElement("li");
+                li.textContent = `Game ${index + 1}: ${s}`;
+                scoreboard.appendChild(li);
+            });
+
+            overlay.style.display = "block";
+            popup.style.display = "block";
+        }
+
+        function closePopup() {
+            overlay.style.display = "none";
+            popup.style.display = "none";
+        }
+
+        function startGame() {
+            time = 60;
+            score = 0;
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = time;
+
+            startPopup.style.display = "none";
+            overlay.style.display = "none";
+
+            generateQuestion();
+
+            interval = setInterval(() => {
+                time--;
+                timeDisplay.textContent = time;
+
+                if (time <= 0) {
+                    clearInterval(interval);
+                    showPopup();
+                }
+            }, 1000);
+        }
+
+        startButton.addEventListener("click", startGame);
+        restartButton.addEventListener("click", () => {
+            closePopup();
+            startGame();
+        });
+    </script>
+</body>
+</html>
