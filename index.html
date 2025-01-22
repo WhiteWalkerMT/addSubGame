@@ -212,8 +212,8 @@
         function generateQuestion() {
             let num1, num2, answer;
             do {
-                num1 = Math.floor(Math.random() * 11);
-                num2 = Math.floor(Math.random() * 11);
+                num1 = Math.floor(Math.random() * 10) + 1;
+                num2 = Math.floor(Math.random() * 10) + 1;
                 const isAddition = Math.random() > 0.5;
                 answer = isAddition ? num1 + num2 : num1 - num2;
                 currentQuestion = { question: isAddition ? `${num1} + ${num2}` : `${num1} - ${num2}`, answer };
@@ -228,8 +228,8 @@
             const answers = new Set([correctAnswer]);
 
             while (answers.size < 5) {
-                const fakeAnswer = Math.floor(Math.random() * 21) - 10;
-                if (fakeAnswer > 0) answers.add(fakeAnswer);
+                const fakeAnswer = Math.floor(Math.random() * 19) + 1;
+                answers.add(fakeAnswer);
             }
 
             Array.from(answers).sort(() => Math.random() - 0.5).forEach(answer => {
